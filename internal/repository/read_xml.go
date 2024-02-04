@@ -1,14 +1,15 @@
-package service
+package repository
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/43nvy/XMLUnite/internal/service"
 	"golang.org/x/text/encoding/charmap"
 )
 
-func (s *service) ReadXMLFile(filePath string) (*XMLData, error) {
+func (r *repos) ReadXMLFile(filePath string) (*service.XMLData, error) {
 	fileData, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("ReadXMLFile error: %w", err)
@@ -23,13 +24,11 @@ func (s *service) ReadXMLFile(filePath string) (*XMLData, error) {
 	parentDirName := filepath.Dir(filePath)
 	rootDirName := filepath.Dir(parentDirName)
 
-	result := &XMLData{
-		data: utf8Data,
+	return &service.XMLData{
+		Data: utf8Data,
 
-		rootDirName:   filepath.Base(rootDirName),
-		parentDirName: filepath.Base(parentDirName),
-		fileName:      fileName,
-	}
-
-	return result, nil
+		RootDirName:   filepath.Base(rootDirName),
+		ParentDirName: filepath.Base(parentDirName),
+		FileName:      fileName,
+	}, nil
 }

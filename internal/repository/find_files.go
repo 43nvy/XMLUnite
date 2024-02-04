@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-func (s *service) FindFiles() ([]string, error) {
+func (r *repos) FindFiles() ([]string, error) {
 	var xmlFilesList []string
 
-	err := filepath.Walk(s.rootDataDir, func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(r.rootDataDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

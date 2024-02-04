@@ -1,45 +1,51 @@
 package service
 
 import (
-	consoleUI "github.com/43nvy/XMLUnite/internal/ui"
+	"sort"
 )
 
-type ui interface {
-	InputData(data string)
-	OutputData(data string)
-}
-
 type Service interface {
-	FindFiles() ([]string, error)
-	ReadXMLFile(filePath string) (*XMLData, error)
 	ParseXMLFile(xmlData *XMLData) *XLSXData
-	ExtractToXLSX(xmlData []*XLSXData) error
+	ExtractToXLSX(data []*XLSXData) error
 }
 
 type service struct {
-	ui consoleUI.ConsoleUI
-
-	rootDataDir    string
 	outputFileName string
 
-	fields []string
+	fieldNames    []string
+	tagNames      []fieldTag
+	tagFieldNames map[string][]string
 }
 
-func New(ui consoleUI.ConsoleUI, rootDataDir string, outputFileName string, fields []string) Service {
+func New(outputFileName string, fields []string, tagFields map[string][]string) Service {
+	var strTags []string
+
+	for key := range tagFields {
+		strTags = append(strTags, key)
+	}
+
+	sort.Strings(strTags)
+
+	tags := make([]fieldTag, len(strTags))
+
+	for i, strTag := range strTags {
+		tags[i] = fieldTag(strTag)
+	}
+
 	return &service{
-		ui:             ui,
-		rootDataDir:    rootDataDir,
 		outputFileName: outputFileName,
-		fields:         fields,
+		fieldNames:     fields,
+		tagNames:       tags,
+		tagFieldNames:  tagFields,
 	}
 }
 
-func (s *service) fieldsWithSpace() []string {
-	newFields := make([]string, len(s.fields))
+func (s *service) namesWithSpace(fieldNames []string) []string {
+	newFieldNames := make([]string, len(fieldNames))
 
-	for i, field := range s.fields {
-		newFields[i] = field + " "
+	for i, name := range fieldNames {
+		newFieldNames[i] = name + " "
 	}
 
-	return newFields
+	return newFieldNames
 }

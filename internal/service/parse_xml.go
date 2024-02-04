@@ -5,32 +5,77 @@ import (
 	"strings"
 )
 
-func (s *service) ParseXMLFile(xmlData *XMLData) *XLSXData {
-	lines := bytes.Split(xmlData.data, []byte("\n"))
+func (s *service) ParseXMLFile(data *XMLData) *XLSXData {
+	lines := bytes.Split(data.Data, []byte("\n"))
 
-	dataMap := make(map[string]string)
+	fieldsData := s.parseFields(lines, s.namesWithSpace(s.fieldNames)) // Так как в источнике данных есть вхождения между искомыми строками, нужно убедиться, что берется нужное поле
+	tagFieldsData := s.parseTagFields(lines)
 
-	fields := s.fieldsWithSpace() // Так как в источнике данных есть вхождения между искомыми строками, нужно убедиться, что берется нужное поле
+	return &XLSXData{
+		RootDirName:   data.RootDirName,
+		ParentDirName: data.ParentDirName,
 
-	for _, line := range lines {
-		for _, field := range fields {
-			if bytes.Contains(line, []byte(field)) {
-				equalIndex := bytes.Index(line, []byte("="))
-				if equalIndex == -1 {
+		fieldsData:    fieldsData,
+		tagFieldsData: tagFieldsData,
+	}
+}
+
+func (s *service) parseTagFields(lines [][]byte) map[string]map[string]string {
+	tagFieldsData := make(map[string]map[string]string)
+
+	if len(s.tagFieldNames) != 0 {
+
+		for _, tag := range s.tagNames {
+			var tagLines [][]byte
+			isInsideTag := false
+			for _, line := range lines {
+
+				if bytes.Contains(line, []byte(tag.openTag())) {
+					isInsideTag = true
 					continue
 				}
 
-				value := strings.TrimSpace(string(line[equalIndex+1:])) // Чтобы пропустить пробел, берем значение после "=" +1
+				if isInsideTag {
+					tagLines = append(tagLines, line)
+				}
+
+				if bytes.Contains(line, []byte(tag.closeTag())) {
+					isInsideTag = false
+				}
+			}
+
+			newTagFieldsNames := s.namesWithSpace(s.tagFieldNames[string(tag)])
+			tagData := s.parseFields(tagLines, newTagFieldsNames)
+			tagFieldsData[string(tag)] = tagData
+		}
+	}
+
+	return tagFieldsData
+}
+
+func (s *service) parseFields(lines [][]byte, fieldNames []string) map[string]string {
+	dataMap := make(map[string]string)
+
+	for _, line := range lines {
+		for _, field := range fieldNames {
+			if bytes.Contains(line, []byte(field)) {
+				value := s.takeValueFromLine(line)
 				dataMap[strings.TrimSpace(field)] = value
 				break // Уже нашли значение по списку, можно идти на следующую строку
 			}
 		}
 	}
 
-	return &XLSXData{
-		rootDirName:   xmlData.rootDirName,
-		parentDirName: xmlData.parentDirName,
+	return dataMap
+}
 
-		data: dataMap,
+func (s *service) takeValueFromLine(line []byte) string {
+	equalIndex := bytes.Index(line, []byte("="))
+	if equalIndex == -1 {
+		return ""
 	}
+
+	value := strings.TrimSpace(string(line[equalIndex+1:])) // Чтобы пропустить пробел, берем значение после "=" +1
+
+	return value
 }
