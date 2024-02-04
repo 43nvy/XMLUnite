@@ -93,4 +93,6 @@ func main() {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при создании итогового файла: %s", err.Error()))
 		os.Exit(1)
 	}
+
+	consoleUI.OutputData(fmt.Sprintf("Выполнение программы завершено успешно, файл %s.xlsx создан.", fileName))
 }

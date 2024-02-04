@@ -10,6 +10,7 @@ import (
 
 	consoleUI "github.com/43nvy/XMLUnite/internal/ui"
 	"github.com/tealeg/xlsx"
+	"golang.org/x/text/encoding/charmap"
 )
 
 type ui interface {
@@ -67,12 +68,17 @@ func (s *service) ReadXMLFile(filePath string) (*XMLData, error) {
 		return nil, fmt.Errorf("ReadXMLFile error: %w", err)
 	}
 
+	utf8Data, err := charmap.Windows1251.NewDecoder().Bytes(fileData)
+	if err != nil {
+		return nil, fmt.Errorf("Error converting encoding: %w", err)
+	}
+
 	fileName := filepath.Base(filePath)
 	parentDirName := filepath.Dir(filePath)
 	rootDirName := filepath.Dir(parentDirName)
 
 	result := &XMLData{
-		data: fileData,
+		data: utf8Data,
 
 		rootDirName:   filepath.Base(rootDirName),
 		parentDirName: filepath.Base(parentDirName),
@@ -97,7 +103,6 @@ func (s *service) ParseXMLFile(xmlData *XMLData) *XLSXData {
 
 				value := strings.TrimSpace(string(line[equalIndex+1:]))
 				dataMap[title] = value
-				break
 			}
 		}
 	}
@@ -110,7 +115,8 @@ func (s *service) ParseXMLFile(xmlData *XMLData) *XLSXData {
 		organization:   dataMap[Organization],
 		modelTxtName:   dataMap[ModelTxtName],
 		programm:       dataMap[Programm],
-		sessionTime:    dataMap[SessionDate],
+		sessionTime:    dataMap[SessionTime],
+		sessionDate:    dataMap[SessionDate],
 		sessionDateUTC: dataMap[SessionDateUTC],
 		sessionTimeUTC: dataMap[SessionTimeUTC],
 		dataFileName:   dataMap[DataFileName],
@@ -150,7 +156,7 @@ func (s *service) ExtractToXLSX(xmlData []*XLSXData) error {
 		}
 	}
 
-	err = file.Save(s.outputFileName)
+	err = file.Save(s.outputFileName + ".xlsx")
 	if err != nil {
 		return fmt.Errorf("ExtractToXLSX save xlsx file error: %w", err)
 	}
@@ -171,7 +177,7 @@ func (s *service) fillXLSXSheet(sheet *xlsx.Sheet, xlsxData *XLSXData) {
 
 	dataRow.AddCell().SetValue(xlsxData.rootDirName)
 	dataRow.AddCell().SetValue(xlsxData.parentDirName)
-	dataRow.AddCell().SetValue(xlsxData.fileName)
+	dataRow.AddCell().SetValue(xlsxData.dataFileName)
 
 	dataRow.AddCell().SetValue(xlsxData.organization)
 	dataRow.AddCell().SetValue(xlsxData.modelTxtName)
