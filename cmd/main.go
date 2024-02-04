@@ -34,9 +34,8 @@ func main() {
 	dataDirPath := filepath.Join(currDir, "data")
 
 	var outputFileName string
-	// consoleUI.OutputData(fileNameMsg)
-	// consoleUI.InputData(&outputFileName)
-	outputFileName = "ssa"
+	consoleUI.OutputData(fileNameMsg)
+	consoleUI.InputData(&outputFileName)
 
 	repos := repository.New(dataDirPath)
 
