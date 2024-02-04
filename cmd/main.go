@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 
+	"github.com/43nvy/XMLUnite/internal/config"
 	"github.com/43nvy/XMLUnite/internal/service"
 	"github.com/43nvy/XMLUnite/internal/ui"
 )
@@ -21,16 +23,23 @@ func main() {
 	currDir, _ := os.Getwd()
 	consoleUI.OutputData(currentDirMsg, fmt.Sprintf("%v\n", currDir))
 
-	// var dirPath string
+	// var dataDirPath string
 	// consoleUI.OutputData(pathMsg)
-	// consoleUI.InputData(&dirPath)
-	dirPath := "/home/shiva/Desktop/proj/Go/data"
+	// consoleUI.InputData(&dataDirPath)
+	dataDirPath := "/home/shiva/Desktop/proj/Go/data"
 	// var fileName string
 	// consoleUI.OutputData(fileNameMsg)
 	// consoleUI.InputData(&fileName)
 	fileName := "ssss"
 
-	srv := service.New(consoleUI, dirPath, fileName)
+	cfgPath := filepath.Join("config.txt")
+	cfg, err := config.NewConfig(cfgPath)
+	if err != nil {
+		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при чтении файла конфигурации: %s", err.Error()))
+		os.Exit(1)
+	}
+
+	srv := service.New(consoleUI, dataDirPath, fileName, cfg.Fileds)
 	files, err := srv.FindFiles()
 	if err != nil {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при поиске файлов: %s", err.Error()))
@@ -52,7 +61,7 @@ func main() {
 			defer wgRead.Done()
 			data, err := srv.ReadXMLFile(tempFilePath)
 			if err != nil {
-				errChan <- fmt.Errorf("Возникла ошибка при чтении файла [%s]: %w", tempFilePath, err)
+				errChan <- fmt.Errorf("Возникла ошибка при чтении файла [%s]: %w", filepath.Base(tempFilePath), err)
 			}
 
 			xmlDataList[tempIndex] = data
@@ -94,5 +103,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	consoleUI.OutputData(fmt.Sprintf("Выполнение программы завершено успешно, файл %s.xlsx создан.", fileName))
+	consoleUI.OutputData(fmt.Sprintf("Выполнение программы завершено успешно, файл %s.xlsx создан.\n", fileName))
 }
