@@ -16,5 +16,5 @@ func (c *ConsoleUI) OutputData(data ...string) {
 }
 
 func New() ConsoleUI {
-	return *&ConsoleUI{}
+	return ConsoleUI{}
 }
