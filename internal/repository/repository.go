@@ -11,7 +11,7 @@ type repos struct {
 	rootDataDir string
 }
 
-func New(rootDataDir string) *repos {
+func New(rootDataDir string) Repos {
 	return &repos{
 		rootDataDir: rootDataDir,
 	}
