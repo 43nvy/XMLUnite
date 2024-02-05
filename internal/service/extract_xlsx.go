@@ -35,12 +35,9 @@ func (s *service) fillHeaderRow(sheet *xlsx.Sheet) {
 
 	headerRow.AddCell().SetValue("Папка")
 	headerRow.AddCell().SetValue("Подпапка")
+	headerRow.AddCell().SetValue("Файл")
 
 	for _, title := range s.fieldNames {
-		if title == "cDataFileName" {
-			title = "Название файла"
-		}
-
 		headerRow.AddCell().SetValue(title)
 	}
 
@@ -57,8 +54,9 @@ func (s *service) fillHeaderRow(sheet *xlsx.Sheet) {
 func (s *service) fillXLSXSheet(sheet *xlsx.Sheet, xlsxData *XLSXData) {
 	dataRow := sheet.AddRow()
 
-	dataRow.AddCell().SetValue(xlsxData.RootDirName)
-	dataRow.AddCell().SetValue(xlsxData.ParentDirName)
+	dataRow.AddCell().SetValue(xlsxData.rootDirName)
+	dataRow.AddCell().SetValue(xlsxData.parentDirName)
+	dataRow.AddCell().SetValue(xlsxData.fileName)
 
 	for _, field := range s.fieldNames {
 		dataRow.AddCell().SetValue(xlsxData.fieldsData[field])

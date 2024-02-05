@@ -12,8 +12,9 @@ func (s *service) ParseXMLFile(data *XMLData) *XLSXData {
 	tagFieldsData := s.parseTagFields(lines)
 
 	return &XLSXData{
-		RootDirName:   data.RootDirName,
-		ParentDirName: data.ParentDirName,
+		rootDirName:   data.RootDirName,
+		parentDirName: data.ParentDirName,
+		fileName:      data.FileName,
 
 		fieldsData:    fieldsData,
 		tagFieldsData: tagFieldsData,

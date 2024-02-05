@@ -14,8 +14,9 @@ type XLSXData struct {
 	fieldsData    map[string]string
 	tagFieldsData map[string]map[string]string
 
-	RootDirName   string
-	ParentDirName string
+	rootDirName   string
+	parentDirName string
+	fileName      string
 }
 
 type fieldTag string
