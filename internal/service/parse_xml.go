@@ -42,9 +42,9 @@ func (s *service) parseTagFields(lines [][]byte) map[string]map[string]string {
 
 			if isInsideTag {
 				tagLines = append(tagLines, line)
-			}
 
-			if bytes.Contains(line, []byte(tag.closeTag())) {
+			} else {
+				bytes.Contains(line, []byte(tag.closeTag()))
 				isInsideTag = false
 			}
 		}
