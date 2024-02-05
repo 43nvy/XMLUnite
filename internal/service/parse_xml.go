@@ -9,7 +9,13 @@ func (s *service) ParseXMLFile(data *XMLData) *XLSXData {
 	lines := bytes.Split(data.Data, []byte("\n"))
 
 	fieldsData := s.parseFields(lines, s.namesWithSpace(s.fieldNames)) // Так как в источнике данных есть вхождения между искомыми строками, нужно убедиться, что берется нужное поле
-	tagFieldsData := s.parseTagFields(lines)
+
+	var tagFieldsData map[string]map[string]string
+	if len(s.tagFieldNames) != 0 {
+		tagFieldsData = s.parseTagFields(lines)
+	} else {
+		tagFieldsData = nil
+	}
 
 	return &XLSXData{
 		rootDirName:   data.RootDirName,
@@ -24,31 +30,28 @@ func (s *service) ParseXMLFile(data *XMLData) *XLSXData {
 func (s *service) parseTagFields(lines [][]byte) map[string]map[string]string {
 	tagFieldsData := make(map[string]map[string]string)
 
-	if len(s.tagFieldNames) != 0 {
+	for _, tag := range s.tagNames {
+		var tagLines [][]byte
+		isInsideTag := false
+		for _, line := range lines {
 
-		for _, tag := range s.tagNames {
-			var tagLines [][]byte
-			isInsideTag := false
-			for _, line := range lines {
-
-				if bytes.Contains(line, []byte(tag.openTag())) {
-					isInsideTag = true
-					continue
-				}
-
-				if isInsideTag {
-					tagLines = append(tagLines, line)
-				}
-
-				if bytes.Contains(line, []byte(tag.closeTag())) {
-					isInsideTag = false
-				}
+			if bytes.Contains(line, []byte(tag.openTag())) {
+				isInsideTag = true
+				continue
 			}
 
-			newTagFieldsNames := s.namesWithSpace(s.tagFieldNames[string(tag)])
-			tagData := s.parseFields(tagLines, newTagFieldsNames)
-			tagFieldsData[string(tag)] = tagData
+			if isInsideTag {
+				tagLines = append(tagLines, line)
+			}
+
+			if bytes.Contains(line, []byte(tag.closeTag())) {
+				isInsideTag = false
+			}
 		}
+
+		newTagFieldsNames := s.namesWithSpace(s.tagFieldNames[string(tag)])
+		tagData := s.parseFields(tagLines, newTagFieldsNames)
+		tagFieldsData[string(tag)] = tagData
 	}
 
 	return tagFieldsData
