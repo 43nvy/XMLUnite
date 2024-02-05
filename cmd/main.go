@@ -14,7 +14,6 @@ import (
 
 const (
 	currentDirMsg string = "Текущая папка: "
-	pathMsg       string = "Введите путь до папки"
 	fileNameMsg   string = "Введите название файла для обьединения"
 )
 
@@ -27,11 +26,17 @@ func main() {
 	cfg, err := config.NewConfig(cfgPath)
 	if err != nil {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при чтении файла конфигурации: %s", err.Error()))
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	consoleUI.OutputData(currentDirMsg, fmt.Sprintf("%v\n", currDir))
+
 	dataDirPath := filepath.Join(currDir, "data")
+	err = haveDataDir(dataDirPath)
+	if err != nil {
+		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при поиске директории data: %s", err.Error()))
+		os.Exit(0)
+	}
 
 	var outputFileName string
 	consoleUI.OutputData(fileNameMsg)
@@ -124,4 +129,17 @@ func main() {
 	}
 
 	consoleUI.OutputData(fmt.Sprintf("Выполнение программы завершено успешно, файл %s.xlsx создан.\n", outputFileName))
+}
+
+func haveDataDir(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err := os.Mkdir(path, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("haveDateDir mkdir error: %w", err)
+		}
+
+		return fmt.Errorf("папка data не была найден в директории с программой, она был создана заново.")
+	}
+
+	return nil
 }

@@ -13,6 +13,15 @@ type FieldsConfig struct {
 }
 
 func NewConfig(cfgPath string) (*FieldsConfig, error) {
+	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+		err := os.WriteFile(cfgPath, nil, 0644)
+		if err != nil {
+			return nil, fmt.Errorf("NewConfig create file error: %w", err)
+		}
+
+		return nil, fmt.Errorf("файл config.txt не был найден в директории с программой, он был создан заново.")
+	}
+
 	data, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("NewConfig read file error: %w", err)
