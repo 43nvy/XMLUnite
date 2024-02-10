@@ -1,7 +1,5 @@
 package service
 
-import "fmt"
-
 type XMLData struct {
 	Data []byte
 
@@ -11,20 +9,9 @@ type XMLData struct {
 }
 
 type XLSXData struct {
-	fieldsData    map[string]string
-	tagFieldsData map[string]map[string]string
+	Data map[string]string
 
-	rootDirName   string
-	parentDirName string
-	fileName      string
-}
-
-type fieldTag string
-
-func (t *fieldTag) openTag() string {
-	return fmt.Sprintf("<%s>", *t)
-}
-
-func (t *fieldTag) closeTag() string {
-	return fmt.Sprintf("</%s>", *t)
+	RootDirName   string
+	ParentDirName string
+	FileName      string
 }

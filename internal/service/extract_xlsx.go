@@ -37,36 +37,19 @@ func (s *service) fillHeaderRow(sheet *xlsx.Sheet) {
 	headerRow.AddCell().SetValue("Подпапка")
 	headerRow.AddCell().SetValue("Файл")
 
-	for _, title := range s.fieldNames {
+	for _, title := range s.tagNames {
 		headerRow.AddCell().SetValue(title)
-	}
-
-	if len(s.tagFieldNames) != 0 {
-		for tagName, tagFieldNameSlice := range s.tagFieldNames {
-			for _, fieldName := range tagFieldNameSlice {
-				headerTitle := fmt.Sprintf("[%s] %s", tagName, fieldName)
-				headerRow.AddCell().SetValue(headerTitle)
-			}
-		}
 	}
 }
 
 func (s *service) fillXLSXSheet(sheet *xlsx.Sheet, xlsxData *XLSXData) {
 	dataRow := sheet.AddRow()
 
-	dataRow.AddCell().SetValue(xlsxData.rootDirName)
-	dataRow.AddCell().SetValue(xlsxData.parentDirName)
-	dataRow.AddCell().SetValue(xlsxData.fileName)
+	dataRow.AddCell().SetValue(xlsxData.RootDirName)
+	dataRow.AddCell().SetValue(xlsxData.ParentDirName)
+	dataRow.AddCell().SetValue(xlsxData.FileName)
 
-	for _, field := range s.fieldNames {
-		dataRow.AddCell().SetValue(xlsxData.fieldsData[field])
-	}
-
-	if len(s.tagFieldNames) != 0 {
-		for tagName, tagFieldNameSlice := range s.tagFieldNames {
-			for _, fieldName := range tagFieldNameSlice {
-				dataRow.AddCell().SetValue(xlsxData.tagFieldsData[tagName][fieldName])
-			}
-		}
+	for _, field := range s.tags {
+		dataRow.AddCell().SetValue(xlsxData.Data[field])
 	}
 }

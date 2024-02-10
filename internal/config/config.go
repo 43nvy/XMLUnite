@@ -5,11 +5,12 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type FieldsConfig struct {
-	Fields    []string
-	TagFileds map[string][]string
+	Tags     []string
+	TagNames []string
 }
 
 func NewConfig(cfgPath string) (*FieldsConfig, error) {
@@ -27,43 +28,34 @@ func NewConfig(cfgPath string) (*FieldsConfig, error) {
 		return nil, fmt.Errorf("NewConfig read file error: %w", err)
 	}
 
-	fields, tagFields := formateFields(data)
+	tags, tagNames := formateFields(data)
 
 	return &FieldsConfig{
-		Fields:    fields,
-		TagFileds: tagFields,
+		Tags:     tags,
+		TagNames: tagNames,
 	}, nil
 }
 
-func formateFields(cfgFileData []byte) ([]string, map[string][]string) {
+func formateFields(cfgFileData []byte) ([]string, []string) {
 	scanner := bufio.NewScanner(bytes.NewReader(cfgFileData))
 
-	var fields []string
-	tagFields := make(map[string][]string)
-
-	var inTag bool
-	var currTag string
+	var tags []string
+	var tagNames []string
 
 	for scanner.Scan() {
 		line := scanner.Text()
-
-		if inTag {
-			if line == fmt.Sprintf("</%s>", currTag) {
-				inTag = false
-				currTag = ""
-			} else {
-				tagFields[currTag] = append(tagFields[currTag], line)
-			}
-		} else {
-			if len(line) > 2 && line[0] == '<' && line[len(line)-1] == '>' {
-				inTag = true
-				currTag = line[1 : len(line)-1]
-				tagFields[currTag] = []string{}
-			} else {
-				fields = append(fields, line)
-			}
-		}
+		tags = append(tags, line)
+		tagNames = append(tagNames, cleanTag(line))
 	}
 
-	return fields, tagFields
+	return tags, tagNames
+}
+
+func cleanTag(tag string) string {
+	index := strings.Index(tag, ":")
+	if index == -1 {
+		return tag
+	}
+
+	return tag[index+1:]
 }

@@ -13,8 +13,14 @@ import (
 )
 
 const (
-	currentDirMsg string = "Текущая папка: "
-	fileNameMsg   string = "Введите название файла для обьединения"
+	currentDirMsg      string = "Текущая папка: "
+	fileNameMsg        string = "Введите название файла для обьединения"
+	pressEnterMsg      string = "Нажмите Enter для выхода..."
+	dataDirNotFoundMsg string = "папка data не была найден в директории с программой, она был создана заново."
+	startReadMsg       string = "Началось чтение файлов..."
+	manyReadErrors     string = "Программа не смогла прочитать ни один файл, проверьте целостность файлов."
+	readXmlFinalMsh    string = "Чтение .xml файлов окончено, начинается создание итогового файла..."
+	finalMsg           string = "Выполнение программы завершено без критических ошибок, файл %s.xlsx создан.\n"
 )
 
 func main() {
@@ -26,6 +32,8 @@ func main() {
 	cfg, err := config.NewConfig(cfgPath)
 	if err != nil {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при чтении файла конфигурации: %s", err.Error()))
+		fmt.Println(pressEnterMsg)
+		fmt.Scanln()
 		os.Exit(0)
 	}
 
@@ -35,18 +43,23 @@ func main() {
 	err = haveDataDir(dataDirPath)
 	if err != nil {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при поиске директории data: %s", err.Error()))
+		fmt.Println(pressEnterMsg)
+		fmt.Scanln()
 		os.Exit(0)
 	}
 
 	var outputFileName string
-	consoleUI.OutputData(fileNameMsg)
-	consoleUI.InputData(&outputFileName)
+	// consoleUI.OutputData(fileNameMsg)
+	// consoleUI.InputData(&outputFileName)
+	outputFileName = "sas"
 
 	repos := repository.New(dataDirPath)
 
 	files, err := repos.FindFiles()
 	if err != nil {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при поиске файлов: %s", err.Error()))
+		fmt.Println(pressEnterMsg)
+		fmt.Scanln()
 		os.Exit(1)
 	}
 
@@ -57,7 +70,7 @@ func main() {
 	var counter int
 	errChan := make(chan error, len(files))
 
-	consoleUI.OutputData("Началось чтение файлов...")
+	consoleUI.OutputData(startReadMsg)
 	xmlDataList := make([]*service.XMLData, len(files))
 
 	for i, file := range files {
@@ -85,19 +98,21 @@ func main() {
 	wgRead.Wait()
 	counter = 0
 
-	close(errChan)
 	if len(errChan) == len(files) {
-		consoleUI.OutputData("Программа не смогла прочитать ни один файл, проверьте целостность файлов.")
+		consoleUI.OutputData(manyReadErrors)
+		fmt.Println(pressEnterMsg)
+		fmt.Scanln()
 		os.Exit(1)
-	}
-	for err := range errChan {
-		consoleUI.OutputData(err.Error())
+	} else if len(errChan) > 0 {
+		for err := range errChan {
+			consoleUI.OutputData(err.Error())
+		}
 	}
 
-	srv := service.New(outputFileName, cfg.Fields, cfg.TagFileds)
+	srv := service.New(outputFileName, cfg.Tags, cfg.TagNames)
 	var wgParse sync.WaitGroup
 
-	consoleUI.OutputData("Чтение .xml файлов окончено, начинается создание итогового файла...")
+	consoleUI.OutputData(readXmlFinalMsh)
 	xlsxDataList := make([]*service.XLSXData, len(xmlDataList))
 
 	for i, value := range xmlDataList {
@@ -107,7 +122,10 @@ func main() {
 		go func(index int, xmlData *service.XMLData) {
 			defer wgParse.Done()
 
-			data := srv.ParseXMLFile(xmlData)
+			data, err := srv.ParseXMLFile(xmlData)
+			if err != nil {
+				errChan <- fmt.Errorf("Возникла ошибка при парсинге данных в файле [%s]: %w", data.FileName, err)
+			}
 
 			mu.Lock()
 			xlsxDataList[index] = data
@@ -121,14 +139,28 @@ func main() {
 	}
 
 	wgParse.Wait()
+	close(errChan)
+
+	if len(errChan) == len(files) {
+		consoleUI.OutputData(manyReadErrors)
+		fmt.Println(pressEnterMsg)
+		fmt.Scanln()
+		os.Exit(1)
+	} else if len(errChan) > 0 {
+		for err := range errChan {
+			consoleUI.OutputData(err.Error())
+		}
+	}
 
 	err = srv.ExtractToXLSX(xlsxDataList)
 	if err != nil {
 		consoleUI.OutputData(fmt.Sprintf("Возникла ошибка при создании итогового файла: %s", err.Error()))
+		fmt.Println(pressEnterMsg)
+		fmt.Scanln()
 		os.Exit(1)
 	}
 
-	consoleUI.OutputData(fmt.Sprintf("Выполнение программы завершено успешно, файл %s.xlsx создан.\n", outputFileName))
+	consoleUI.OutputData(fmt.Sprintf(finalMsg, outputFileName))
 }
 
 func haveDataDir(path string) error {
@@ -138,7 +170,7 @@ func haveDataDir(path string) error {
 			return fmt.Errorf("haveDateDir mkdir error: %w", err)
 		}
 
-		return fmt.Errorf("папка data не была найден в директории с программой, она был создана заново.")
+		return fmt.Errorf(dataDirNotFoundMsg)
 	}
 
 	return nil

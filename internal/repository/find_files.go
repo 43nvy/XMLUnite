@@ -15,7 +15,7 @@ func (r *repos) FindFiles() ([]string, error) {
 			return err
 		}
 
-		if !info.IsDir() && strings.HasSuffix(info.Name(), ".xml") {
+		if !info.IsDir() && strings.HasSuffix(info.Name(), "MD.xml") {
 			xmlFilesList = append(xmlFilesList, path)
 		}
 
