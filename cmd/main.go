@@ -49,9 +49,8 @@ func main() {
 	}
 
 	var outputFileName string
-	// consoleUI.OutputData(fileNameMsg)
-	// consoleUI.InputData(&outputFileName)
-	outputFileName = "sas"
+	consoleUI.OutputData(fileNameMsg)
+	consoleUI.InputData(&outputFileName)
 
 	repos := repository.New(dataDirPath)
 
